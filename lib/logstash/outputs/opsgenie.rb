@@ -1,18 +1,18 @@
 # encoding: utf-8
 
-require "logstash/outputs/base"
-require "logstash/namespace"
+require 'logstash/outputs/base'
+require 'logstash/namespace'
 require 'json'
-require "uri"
-require "net/http"
-require "net/https"
+require 'uri'
+require 'net/http'
+require 'net/https'
 
 # For more information about the api requests and their contents,
 # please refer to Alert API("https://www.opsgenie.com/docs/web-api/alert-api") support doc.
 
 class LogStash::Outputs::OpsGenie < LogStash::Outputs::Base
 
-  config_name "opsgenie"
+  config_name 'opsgenie'
 
   # OpsGenie Logstash Integration API Key
   config :api_key, :validate => :string, :required => true
@@ -24,18 +24,18 @@ class LogStash::Outputs::OpsGenie < LogStash::Outputs::Base
   config :opsgenie_base_url, :validate => :string, :required => false, :default => 'https://api.opsgenie.com'
 
   # Url will be used to create alerts in OpsGenie
-  config :create_action_url, :validate => :string, :required => false, :default =>'/v1/json/alert'
+  config :create_action_url, :validate => :string, :required => false, :default => '/v1/json/alert'
 
   # Url will be used to close alerts in OpsGenie
-  config :close_action_url, :validate => :string, :required => false, :default =>'/v1/json/alert/close'
+  config :close_action_url, :validate => :string, :required => false, :default => '/v1/json/alert/close'
 
   # Url will be used to acknowledge alerts in OpsGenie
-  config :acknowledge_action_url, :validate => :string, :required => false, :default =>'/v1/json/alert/acknowledge'
+  config :acknowledge_action_url, :validate => :string, :required => false, :default => '/v1/json/alert/acknowledge'
 
   # Url will be used to add notes to alerts in OpsGenie
-  config :note_action_url, :validate => :string, :required => false, :default =>'/v1/json/alert/note'
+  config :note_action_url, :validate => :string, :required => false, :default => '/v1/json/alert/note'
 
-  # OpsGenie alert id 
+  # OpsGenie alert id
   config :alert_id, :validate => :string, :required => false
 
   # Alias of the alert that actions will be executed.
@@ -81,8 +81,8 @@ class LogStash::Outputs::OpsGenie < LogStash::Outputs::Base
       :apiKey => @api_key
     }
     case @opsgenie_action
-    when "create"
-      action_path = "#{@create_action_url}"
+    when 'create'
+      action_path = @create_action_url
       alert[:message] = event.sprintf(@message)
       alert[:teams] = @teams if @teams
       alert[:actions] = @actions if @actions
@@ -93,15 +93,12 @@ class LogStash::Outputs::OpsGenie < LogStash::Outputs::Base
       @details.each do |key, value|
         alert[:details]["#{key}"] = event.sprintf(value)
       end
-    when "close"
-      action_path = "#{@close_action_url}"
-    when "acknowledge"
-      action_path = "#{@acknowledge_action_url}"
-    when "note"
-      action_path = "#{@note_action_url}"
-    else
-      @logger.warn("Action #{opsgenie_action} does not match any available action, discarding..")
-      return
+    when 'close'
+      action_path = @close_action_url
+    when 'acknowledge'
+      action_path = @acknowledge_action_url
+    when 'note'
+      action_path = @note_action_url
     end
 
     alert['alias'] = event.sprintf(@alert_alias) if @alert_alias
@@ -110,11 +107,11 @@ class LogStash::Outputs::OpsGenie < LogStash::Outputs::Base
     begin
       request = Net::HTTP::Post.new(action_path)
       request.body = LogStash::Json.dump(alert)
-      @logger.debug("OpsGenie Request", :request => request.inspect)
+      @logger.debug('OpsGenie Request', :request => request.inspect)
       response = @client.request(request)
-      @logger.debug("OpsGenie Response", :response => response.body)
+      @logger.debug('OpsGenie Response', :response => response.body)
     rescue Exception => e
-      @logger.error("OpsGenie Unhandled exception", :pd_error => e.backtrace)
+      @logger.error('OpsGenie Unhandled exception', :og_error => e.backtrace)
     end
   end # def receive
 end # class LogStash::Outputs::OpsGenie
